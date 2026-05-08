@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model category {
+  id          String    @id @default(cuid())
+  name        String    @unique(map: "Category_name_key")
+  description String?   @db.Text
+  order       Int       @default(0)
+  product     product[]
+}
+
+model product {
+  id              String    @id @default(cuid())
+  name            String
+  description     String    @db.Text
+  price           Float
+  discount        Int       @default(0)
+  stock           Int       @default(0)
+  image           String?   @db.LongText
+  status          String    @default("ACTIVE")
+  rating          Float     @default(5.0)
+  reviewCount     Int       @default(0)
+  hasFreeShipping Boolean   @default(false)
+  hasWarranty     Boolean   @default(true)
+  categoryId      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  category        category? @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
+  images          productImage[]
+  orderItems      OrderItem[]
+
+
+  @@index([categoryId], map: "Product_categoryId_fkey")
+}
+
+
+model productImage {
+  id        String  @id @default(cuid())
+  url       String  @db.LongText
+  productId String
+  product   product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+
+model user {
+  id        String   @id @default(cuid())
+  email     String   @unique(map: "User_email_key")
+  name      String?
+  password  String
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String?
+  total           Float
+  status          String      @default("PENDING") // PENDING, PAID, SHIPPED, COMPLETED, CANCELLED
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  shippingAddress String      @db.Text
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
+  user            user?       @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float   // Price at the time of purchase
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+
