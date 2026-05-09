@@ -6,6 +6,7 @@ import { Plus, Trash2, ArrowUp, ArrowDown, Edit2, Check, X, Settings2 } from 'lu
 import { createCategory, updateCategory, deleteCategory, reorderCategories } from '@/app/actions/categoryActions';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import ConfirmModal from './ui/ConfirmModal';
 
 interface Category {
   id: string;
@@ -20,6 +21,7 @@ export default function CategoryManager({ initialCategories }: { initialCategori
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [catToDelete, setCatToDelete] = useState<string | null>(null);
 
   const handleAdd = async () => {
     if (!newCatName.trim()) return;
@@ -48,16 +50,21 @@ export default function CategoryManager({ initialCategories }: { initialCategori
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Borrar esta categoría? Solo funcionará si no tiene productos.')) return;
+    setCatToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!catToDelete) return;
     setIsUpdating(true);
-    const res = await deleteCategory(id);
+    const res = await deleteCategory(catToDelete);
     if (res.success) {
-      setCategories(categories.filter(c => c.id !== id));
+      setCategories(categories.filter(c => c.id !== catToDelete));
       toast.success('Eliminado');
     } else {
       toast.error(res.error);
     }
     setIsUpdating(false);
+    setCatToDelete(null);
   };
 
   const move = async (index: number, direction: 'up' | 'down') => {
@@ -170,6 +177,16 @@ export default function CategoryManager({ initialCategories }: { initialCategori
           </div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={!!catToDelete}
+        onClose={() => setCatToDelete(null)}
+        onConfirm={confirmDelete}
+        title="¿Eliminar categoría?"
+        message="Esta acción solo funcionará si la categoría no tiene productos asociados."
+        confirmText="Eliminar"
+        variant="danger"
+      />
     </>
   );
 }

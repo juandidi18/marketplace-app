@@ -18,10 +18,12 @@ import {
 import { toast } from 'sonner';
 import Link from 'next/link';
 import Image from 'next/image';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -34,16 +36,21 @@ export default function AdminProductsPage() {
     setIsLoading(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.')) return;
+  const handleDelete = (id: string) => {
+    setProductToDelete(id);
+  };
 
-    const result = await deleteProduct(id);
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
+
+    const result = await deleteProduct(productToDelete);
     if (result.success) {
       toast.success('Producto eliminado');
-      setProducts(products.filter(p => p.id !== id));
+      setProducts(products.filter(p => p.id !== productToDelete));
     } else {
       toast.error(result.error);
     }
+    setProductToDelete(null);
   };
 
   const toggleStatus = async (id: string, currentStatus: string) => {
@@ -181,6 +188,16 @@ export default function AdminProductsPage() {
           </table>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!productToDelete}
+        onClose={() => setProductToDelete(null)}
+        onConfirm={confirmDelete}
+        title="¿Eliminar producto?"
+        message="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        variant="danger"
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { deleteProduct } from '@/app/actions/productActions';
 import { toast } from 'sonner';
 import CategoryManager from '@/components/CategoryManager';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface Category {
   id: string;
@@ -38,13 +39,18 @@ export default function CatalogClient({ initialProducts, categories }: CatalogCl
   const [activeCategory, setActiveCategory] = useState('Todos');
   const { addItem } = useCart();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
+  const handleDelete = (id: string) => {
+    setProductToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
     
-    setIsDeleting(id);
+    setIsDeleting(productToDelete);
     try {
-      const result = await deleteProduct(id);
+      const result = await deleteProduct(productToDelete);
       if (result.success) {
         toast.success('Producto eliminado correctamente');
       } else {
@@ -54,6 +60,7 @@ export default function CatalogClient({ initialProducts, categories }: CatalogCl
       toast.error('Error al intentar eliminar');
     } finally {
       setIsDeleting(null);
+      setProductToDelete(null);
     }
   };
 
@@ -206,6 +213,16 @@ export default function CatalogClient({ initialProducts, categories }: CatalogCl
           )}
         </AnimatePresence>
       </div>
+
+      <ConfirmModal
+        isOpen={!!productToDelete}
+        onClose={() => setProductToDelete(null)}
+        onConfirm={confirmDelete}
+        title="¿Eliminar producto?"
+        message="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        variant="danger"
+      />
     </div>
   );
 }
