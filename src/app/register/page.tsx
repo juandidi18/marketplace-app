@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { registerUser } from '@/app/actions/auth.actions';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 export default function RegisterPage() {
   const router = useRouter();
