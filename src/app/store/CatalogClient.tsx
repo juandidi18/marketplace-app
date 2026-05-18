@@ -2,14 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ShoppingCart, Ghost, Trash2, Pencil } from 'lucide-react';
+import { Search, ShoppingCart, Ghost } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/store/useCart';
 import Link from 'next/link';
-import { deleteProduct } from '@/app/actions/productActions';
-import { toast } from 'sonner';
 import CategoryManager from '@/components/CategoryManager';
-import ConfirmModal from '@/components/ui/ConfirmModal';
 
 interface Category {
   id: string;
@@ -38,31 +35,6 @@ export default function CatalogClient({ initialProducts, categories }: CatalogCl
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
   const { addItem } = useCart();
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [productToDelete, setProductToDelete] = useState<string | null>(null);
-
-  const handleDelete = (id: string) => {
-    setProductToDelete(id);
-  };
-
-  const confirmDelete = async () => {
-    if (!productToDelete) return;
-    
-    setIsDeleting(productToDelete);
-    try {
-      const result = await deleteProduct(productToDelete);
-      if (result.success) {
-        toast.success('Producto eliminado correctamente');
-      } else {
-        toast.error(result.error);
-      }
-    } catch (error) {
-      toast.error('Error al intentar eliminar');
-    } finally {
-      setIsDeleting(null);
-      setProductToDelete(null);
-    }
-  };
 
   const filteredProducts = useMemo(() => {
     return initialProducts.filter((product) => {
@@ -167,21 +139,6 @@ export default function CatalogClient({ initialProducts, categories }: CatalogCl
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Link
-                        href={`/store/${product.id}/edit`}
-                        className="p-3 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-full transition-colors"
-                        title="Editar producto"
-                      >
-                        <Pencil className="w-5 h-5" />
-                      </Link>
-                      <button 
-                        disabled={isDeleting === product.id}
-                        onClick={() => handleDelete(product.id)}
-                        className="p-3 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors disabled:opacity-50"
-                        title="Eliminar producto"
-                      >
-                        <Trash2 className={cn("w-5 h-5", isDeleting === product.id && "animate-pulse")} />
-                      </button>
                       <button 
                         onClick={() => addItem(product)}
                         className="bg-primary/10 text-primary p-3 rounded-full hover:bg-primary hover:text-white transition-colors duration-300"
@@ -214,15 +171,6 @@ export default function CatalogClient({ initialProducts, categories }: CatalogCl
         </AnimatePresence>
       </div>
 
-      <ConfirmModal
-        isOpen={!!productToDelete}
-        onClose={() => setProductToDelete(null)}
-        onConfirm={confirmDelete}
-        title="¿Eliminar producto?"
-        message="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
-        confirmText="Eliminar"
-        variant="danger"
-      />
     </div>
   );
 }
